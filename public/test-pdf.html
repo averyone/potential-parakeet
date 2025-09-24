@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF.js Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <div style="text-align: center; margin: 2rem;">
+        <h1>PDF.js Test</h1>
+        <button onclick="loadPdf()" style="padding: 10px 20px; font-size: 16px;">Load Sample PDF</button>
+        <div id="pdf-container" style="margin-top: 2rem;"></div>
+    </div>
+
+    <script>
+        console.log('PDF.js test page loaded');
+        
+        // Set up PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            console.log('PDF.js loaded successfully');
+        } else {
+            console.error('PDF.js not loaded');
+        }
+
+        async function loadPdf() {
+            const container = document.getElementById('pdf-container');
+            container.innerHTML = '<p>Loading PDF...</p>';
+            
+            try {
+                const pdf = await pdfjsLib.getDocument('/sample.pdf').promise;
+                console.log('PDF loaded, pages:', pdf.numPages);
+                
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                canvas.style.border = '1px solid #ddd';
+                canvas.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                container.innerHTML = '';
+                container.appendChild(canvas);
+                console.log('PDF rendered successfully');
+                
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                container.innerHTML = '<p style="color: red;">Error loading PDF: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

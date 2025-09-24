@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Assets Loading</title>
+    <!-- Manually load built assets -->
+    <link rel="stylesheet" href="/build/assets/app-TssGocB7.css">
+    <link rel="stylesheet" href="/build/assets/app-DN22hwpE.css">
+    <style>
+        .test-container {
+            padding: 20px;
+            border: 2px solid #007bff;
+            margin: 20px;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ccc;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Asset Loading Test</h1>
+        <p>This page manually loads the built assets to test if they work.</p>
+        
+        <div id="vue-app">
+            <h2>Vue Test</h2>
+            <p>Message: <span v-text="message"></span></p>
+            <button class="btn" @click="updateMessage">Click Me</button>
+            <p>Counter: <span v-text="counter"></span></p>
+        </div>
+        
+        <div id="status">
+            <h3>Status</h3>
+            <p id="js-status">JavaScript: Loading...</p>
+            <p id="vue-status">Vue.js: Not loaded</p>
+        </div>
+    </div>
+
+    <!-- Manually load the built JavaScript -->
+    <script type="module" src="/build/assets/app-CrbzOSUa.js"></script>
+    
+    <script>
+        document.getElementById('js-status').textContent = 'JavaScript: Loaded!';
+        console.log('Manual asset test - JavaScript loaded');
+        
+        // Wait for Vue to be available
+        function checkVue() {
+            if (window.Vue) {
+                document.getElementById('vue-status').textContent = 'Vue.js: Available!';
+                console.log('Vue.js is available');
+                
+                try {
+                    const { createApp } = window.Vue;
+                    
+                    const app = createApp({
+                        data() {
+                            return {
+                                message: 'Vue is working with manual assets!',
+                                counter: 0
+                            }
+                        },
+                        methods: {
+                            updateMessage() {
+                                this.counter++;
+                                this.message = `Clicked ${this.counter} times!`;
+                            }
+                        }
+                    });
+                    
+                    app.mount('#vue-app');
+                    console.log('Vue app mounted successfully');
+                    document.getElementById('vue-status').textContent = 'Vue.js: Working!';
+                    
+                } catch (error) {
+                    console.error('Error mounting Vue app:', error);
+                    document.getElementById('vue-status').textContent = 'Vue.js: Error - ' + error.message;
+                }
+            } else {
+                console.log('Vue not yet available, retrying...');
+                setTimeout(checkVue, 100);
+            }
+        }
+        
+        // Start checking for Vue
+        setTimeout(checkVue, 100);
+    </script>
+</body>
+</html>

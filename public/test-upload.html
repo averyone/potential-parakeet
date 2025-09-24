@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>PDF Upload Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Test CSRF Token</h3>
+        <button class="btn" onclick="testCSRF()">Test CSRF</button>
+        <div id="csrf-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test API Connectivity</h3>
+        <button class="btn" onclick="testAPI()">Test API</button>
+        <div id="api-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Test PDF Upload</h3>
+        <input type="file" id="pdf-file" accept=".pdf" />
+        <button class="btn" onclick="testUpload()">Upload PDF</button>
+        <div id="upload-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Debug Information</h3>
+        <div id="debug-info" class="info">
+            <p>Current URL: <span id="current-url"></span></p>
+            <p>CSRF Token: <span id="csrf-token"></span></p>
+            <p>Fetch Available: <span id="fetch-available"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize debug info
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('fetch-available').textContent = typeof fetch !== 'undefined' ? 'Yes' : 'No';
+        
+        // Get CSRF token from meta tag or create one
+        function getCSRFToken() {
+            let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token) {
+                // Try to get it from a Laravel endpoint
+                fetch('/csrf-token', { credentials: 'same-origin' })
+                    .then(response => response.json())
+                    .then(data => token = data.token)
+                    .catch(() => token = 'NO_TOKEN');
+            }
+            document.getElementById('csrf-token').textContent = token || 'Not found';
+            return token;
+        }
+        
+        getCSRFToken();
+        
+        async function testCSRF() {
+            const resultDiv = document.getElementById('csrf-result');
+            resultDiv.innerHTML = 'Testing CSRF token...';
+            
+            try {
+                const token = getCSRFToken();
+                if (!token || token === 'NOT_FOUND') {
+                    throw new Error('CSRF token not available');
+                }
+                
+                resultDiv.innerHTML = '<div class="success">✅ CSRF Token: ' + token.substring(0, 20) + '...</div>';
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ CSRF Error: ' + error.message + '</div>';
+            }
+        }
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = 'Testing API...';
+            
+            try {
+                const response = await fetch('/pdf-editor/sessions');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">✅ API Working: ' + JSON.stringify(data) + '</div>';
+                } else {
+                    throw new Error('API returned ' + response.status);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ API Error: ' + error.message + '</div>';
+            }
+        }
+        
+        async function testUpload() {
+            const resultDiv = document.getElementById('upload-result');
+            const fileInput = document.getElementById('pdf-file');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">❌ Please select a PDF file first</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = 'Uploading ' + file.name + '...';
+            
+            try {
+                const token = getCSRFToken();
+                const formData = new FormData();
+                formData.append('pdf_file', file);
+                
+                console.log('Uploading file:', file.name, 'Size:', file.size, 'Type:', file.type);
+                console.log('Using CSRF token:', token ? token.substring(0, 10) + '...' : 'None');
+                
+                const response = await fetch('/pdf-editor/load', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response: ' + responseText.substring(0, 200));
+                }
+                
+                if (response.ok && result.success) {
+                    resultDiv.innerHTML = '<div class="success">✅ Upload successful!<br>' + 
+                        'Session ID: ' + result.session_id + '<br>' +
+                        'Page Count: ' + result.page_count + '<br>' +
+                        'Form Fields: ' + (result.editable_regions?.form_fields?.length || 0) + '</div>';
+                } else {
+                    throw new Error(result.error || 'Upload failed with status ' + response.status);
+                }
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultDiv.innerHTML = '<div class="error">❌ Upload Error: ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>
