@@ -1,146 +1,240 @@
-# Potential Parakeet
+# Potential Parakeet 📄✨
 
-A Laravel 12 application for PDF form filling and manipulation using PDFtk.
+**A comprehensive PDF Editor web application built with Laravel and PDF.js**
 
-## Features
+Upload, view, edit, and export PDF documents with a full-featured browser-based editor. Perfect for PDF form filling, document processing, and multi-page PDF management.
 
-🔥 **PDF Form Filling**: Fill PDF forms with dynamic data
-📄 **Form Field Detection**: Extract form fields from PDF templates  
-🔗 **PDF Merging**: Combine multiple PDFs into one document
-✂️ **PDF Splitting**: Split PDFs into individual pages
-🔒 **PDF Encryption/Decryption**: Add/remove password protection
-🔄 **PDF Rotation**: Rotate pages in any direction
-📊 **PDF Information**: Extract metadata and document info
+## 🚀 Features
 
-## Quick Start
+### 🎯 **PDF Editor Interface**
+- **📤 Upload & Process**: Drag-and-drop PDF upload with validation
+- **👀 PDF Viewer**: Full PDF.js integration with canvas rendering
+- **📄 Multi-page Navigation**: Previous/Next buttons with page indicators
+- **🔍 Zoom Controls**: Zoom in/out with percentage display
+- **📝 Form Field Detection**: Automatic detection of fillable form fields
+- **💾 Session Management**: Track user sessions and edits
+- **⬇️ PDF Export**: Download edited PDFs with applied changes
+- **⚠️ Error Handling**: Comprehensive error messages and fallback viewers
+
+### 🛠️ **Backend PDF Processing (PDFtk)**
+- **🔥 Form Filling**: Fill PDF forms with dynamic data
+- **🔗 PDF Merging**: Combine multiple PDFs into one document
+- **✂️ PDF Splitting**: Split PDFs into individual pages
+- **🔒 Encryption/Decryption**: Add/remove password protection
+- **🔄 PDF Rotation**: Rotate pages in any direction
+- **📊 PDF Information**: Extract metadata and document info
+
+## ⚡ Quick Start
 
 ### Prerequisites
+- **Docker Desktop** (recommended) - for containerized development
+- **Node.js 18+** - for frontend asset building
+- **Git** - for version control
 
-- PHP 8.2+
-- Laravel 12
-- PDFtk (installed via `brew install pdftk-java`)
-
-### Installation
-
-#### Option 1: Docker (Recommended)
+### 🐳 Installation (Docker - Recommended)
 
 ```bash
-# Start Docker containers (includes PHP, MySQL, PDFtk)
+# Clone the repository
+git clone <repository-url>
+cd potential-parakeet
+
+# Start the Docker environment
 ./vendor/bin/sail up -d
 
-# Install dependencies inside Docker
-./vendor/bin/sail composer install
-./vendor/bin/sail npm install
+# Build production assets (REQUIRED for PDF editor)
+npm run build
 
-# Run database migrations
-./vendor/bin/sail artisan migrate
+# Access the application
+open http://localhost:8080
 ```
 
-#### Option 2: Local Installation
+**That's it!** The Docker environment includes:
+- ✅ PHP 8.4 with Laravel
+- ✅ PDFtk-java pre-installed
+- ✅ SQLite database pre-configured
+- ✅ All required dependencies
+
+### 💻 Alternative: Local Installation
 
 ```bash
-# Install dependencies locally
+# System requirements
+brew install pdftk-java  # macOS
+# OR
+sudo apt install pdftk   # Ubuntu/Debian
+
+# Install dependencies
 composer install
 npm install
+npm run build
 
 # Environment setup
 cp .env.example .env
 php artisan key:generate
 
-# Install PDFtk (macOS)
-brew install pdftk-java
-
 # Start development server
-php artisan serve
+php artisan serve  # Access at http://localhost:8000
 ```
 
-### Basic Usage
+## 🎯 Usage
+
+### 🖼️ PDF Editor Web Interface (Primary)
+
+**Main PDF Editor**: [http://localhost:8080/pdf-editor/fixed](http://localhost:8080/pdf-editor/fixed)
+
+1. **Upload PDF**: Click "Load PDF" or drag & drop a PDF file
+2. **View & Navigate**: Use Previous/Next buttons for multi-page PDFs
+3. **Zoom**: Use +/- buttons to zoom in/out
+4. **Edit Forms**: Detected form fields will appear in the properties panel
+5. **Export**: Click "Export" to download the edited PDF
+
+**Features Available**:
+- ✅ **Real-time PDF rendering** with PDF.js
+- ✅ **Multi-page navigation** with smooth transitions
+- ✅ **Zoom controls** (50% to 300%)
+- ✅ **Form field detection** and editing
+- ✅ **Session management** for concurrent users
+- ✅ **Export with applied edits**
+
+### 📝 Alternative Interfaces
+- **Simple Editor**: [http://localhost:8080/pdf-editor/simple](http://localhost:8080/pdf-editor/simple)
+- **Vue Editor**: [http://localhost:8080/pdf-editor](http://localhost:8080/pdf-editor) (development)
+
+### 🛠️ Programmatic Usage (Advanced)
 
 ```php
-use App\Services\PdftkService;
+use App\Services\PdfEditorService;
 
 // Inject the service in your controller
-public function __construct(private PdftkService $pdftkService) {}
+public function __construct(private PdfEditorService $pdfEditorService) {}
 
-// Fill a PDF form
-$filledPdf = $this->pdftkService->fillForm(
-    storage_path('app/pdf/templates/form.pdf'),
-    ['name' => 'John Doe', 'email' => 'john@example.com']
-);
+// Process a PDF upload
+$sessionId = $this->pdfEditorService->createSession($pdfPath);
+
+// Get form fields
+$fields = $this->pdfEditorService->getEditableRegions($pdfPath);
+
+// Apply edits and export
+$this->pdfEditorService->applyEdits($pdfPath, $edits, $outputPath);
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/pdf/form-fields` | POST | Extract form fields from PDF |
-| `/pdf/fill-form` | POST | Fill PDF form with data |
-| `/pdf/merge` | POST | Merge multiple PDFs |
-| `/pdf/split` | POST | Split PDF into pages |
-| `/pdf/info` | POST | Get PDF metadata |
+### 🎯 PDF Editor API (Primary)
 
-## Access URLs
+| Endpoint | Method | Purpose | Status |
+|----------|--------|---------|--------|
+| `/pdf-editor/fixed` | GET | Main PDF editor interface | ✅ Live |
+| `/pdf-editor/load` | POST | Upload and process PDF | ✅ Functional |
+| `/pdf-editor/data?session_id=...` | GET | Get PDF content for rendering | ✅ Functional |
+| `/pdf-editor/export` | POST | Export edited PDF | ✅ Functional |
+| `/pdf-editor/save` | POST | Save current edits | ✅ Functional |
+| `/pdf-editor/sessions` | GET | List user sessions | ✅ Functional |
+| `/pdf-editor/update-field` | POST | Update form field value | ✅ Functional |
 
-- **Laravel App (Docker)**: http://localhost:8080
-- **Laravel App (Local)**: http://localhost:8000
-- **Database (Docker)**: localhost:3307
-- **Database (Local)**: localhost:3306
+### 🛠️ PDFtk API (Legacy/Advanced)
 
-## Testing
+| Endpoint | Method | Purpose | Status |
+|----------|--------|---------|--------|
+| `/pdf/form-fields` | POST | Extract form fields from PDF | ✅ Available |
+| `/pdf/fill-form` | POST | Fill PDF form with data | ✅ Available |
+| `/pdf/merge` | POST | Merge multiple PDFs | ✅ Available |
+| `/pdf/split` | POST | Split PDF into pages | ✅ Available |
+| `/pdf/info` | POST | Get PDF metadata | ✅ Available |
+
+## 🌐 Access URLs
+
+### 🎯 **PDF Editor Interfaces**
+- **Main PDF Editor**: [http://localhost:8080/pdf-editor/fixed](http://localhost:8080/pdf-editor/fixed) ⭐ **Recommended**
+- **Simple Editor**: [http://localhost:8080/pdf-editor/simple](http://localhost:8080/pdf-editor/simple)
+- **Vue Editor**: [http://localhost:8080/pdf-editor](http://localhost:8080/pdf-editor) (development)
+
+### 🛠️ **Application Access**
+- **Laravel App (Docker)**: [http://localhost:8080](http://localhost:8080) ⭐ **Default**
+- **Laravel App (Local)**: [http://localhost:8000](http://localhost:8000)
+- **Database (Docker)**: `localhost:3307` (MySQL)
+- **Database (Local)**: `localhost:3306` (MySQL)
+
+## ⚙️ Testing & Debugging
 
 ```bash
-# Docker commands
-./vendor/bin/sail test
-./vendor/bin/sail test --filter=PdftkServiceTest
-./vendor/bin/sail exec laravel.test pdftk --version
+# Docker commands (recommended)
+sail test                                    # Run all tests
+sail test --filter=PdftkServiceTest         # Run specific tests
+sail exec laravel.test pdftk --version      # Test PDFtk installation
+sail logs                                    # View application logs
+
+# PDF Editor specific debugging
+sail exec laravel.test tail -f storage/logs/laravel.log  # Monitor PDF processing
+sail exec laravel.test ls -la storage/app/private/pdf/   # Check file storage
 
 # Local commands
 php artisan test
-php artisan test --filter=PdftkServiceTest
 pdftk --version
 ```
 
-## 🌐 Web Interface
+## 📱 Screenshots
 
-The application includes a comprehensive web interface for PDF processing:
+### PDF Editor Interface
 
-- **Main Interface**: http://localhost:8080/pdf (Docker) or http://localhost:8000/pdf (Local)
-- **Features**: Form analysis, PDF filling, merging, splitting, and information extraction
-- **User-Friendly**: Drag & drop file uploads, real-time processing, automatic downloads
-- **Responsive**: Works on desktop, tablet, and mobile devices
+**Main Editor View**:
+- 📤 **Upload Area**: Drag & drop PDF files
+- 🖼️ **PDF Viewer**: Canvas-based PDF rendering with PDF.js
+- 🔄 **Navigation**: Previous/Next buttons with page indicators
+- 🔍 **Zoom Controls**: Zoom in/out with percentage display
+- 💾 **Export**: Download edited PDFs
 
-### Quick Web Interface Guide
-1. **Analyze PDF**: Upload a PDF to discover its form fields
-2. **Fill Forms**: Enter data and download completed forms
-3. **Merge PDFs**: Combine multiple PDFs into one document
-4. **Split PDFs**: Extract individual pages from multi-page documents
-5. **Get Info**: View detailed PDF metadata and properties
+**Features in Action**:
+1. ✅ **Upload PDF**: Instant processing and form field detection
+2. ✅ **Multi-page Navigation**: Smooth page transitions
+3. ✅ **Zoom & View**: Responsive PDF rendering
+4. ✅ **Form Editing**: Interactive form field modification
+5. ✅ **Export**: Download PDFs with applied changes
 
-## Documentation
+**Browser Compatibility**: ✅ Chrome, ✅ Firefox, ✅ Safari, ✅ Edge
 
-- **Web Interface**: See `WEB_INTERFACE_README.md` for complete web interface guide
-- **Docker Setup**: See `DOCKER_README.md` for complete Docker setup and usage guide
-- **PDFtk Integration**: See `PDFTK_README.md` for detailed PDFtk integration documentation
-- **Development**: Check `WARP.md` for development guidelines and project structure
-- **Configuration**: Review `config/pdftk.php` for customization options
+## 📚 Documentation
 
-## Storage Structure
+- **Development Guide**: See `WARP.md` for comprehensive development guidelines ⭐
+- **PDFtk Integration**: Review `config/pdftk.php` for PDFtk configuration
+- **API Documentation**: All endpoints documented above with status indicators
+- **Troubleshooting**: Check `WARP.md` for common issues and solutions
+
+## 📁 Storage Structure
 
 ```
-storage/app/
-├── pdf/
-│   ├── templates/          # PDF template files
-│   ├── generated/          # Generated/filled PDFs
-│   └── temp/              # Temporary processing files
-└── temp/                  # General temporary files
+storage/app/private/pdf/       # ✅ PDF file storage (secure)
+├── sessions/              # ✅ User session data (JSON)
+├── templates/             # ✅ Uploaded PDF files
+├── generated/             # ✅ Exported PDF files
+└── temp/                 # ✅ Temporary processing files
+
+public/
+├── build/assets/          # ✅ Built frontend assets (Vite)
+└── pdf.worker.min.mjs    # ✅ PDF.js worker file
+
+resources/
+├── views/pdf/            # ✅ PDF editor Blade templates
+├── js/components/        # ✅ Vue.js components
+└── css/                 # ✅ Application styles
 ```
 
-## Technology Stack
+## 💻 Technology Stack
 
-- **Backend**: Laravel 12, PHP 8.2
-- **PDF Processing**: PDFtk (pdftk-java), mikehaertl/php-pdftk
-- **Testing**: PHPUnit
-- **Frontend**: Vite, Laravel Mix
+### **Backend**
+- **Laravel 11**: PHP framework with Sail (Docker)
+- **PHP 8.4**: Latest PHP version with modern features
+- **PDFtk-java**: PDF manipulation and form processing
+- **SQLite**: Lightweight database for sessions
+
+### **Frontend**
+- **PDF.js 5.4.149**: Browser-based PDF rendering
+- **Vue.js 3.5.21**: Frontend framework (optional)
+- **Vite**: Modern build tool and dev server
+- **Vanilla JS**: Primary PDF editor implementation
+
+### **DevOps**
+- **Docker/Sail**: Containerized development environment
+- **NPM**: Package management and build scripts
 
 ## Contributing
 
